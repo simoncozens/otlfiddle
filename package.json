@@ -52,15 +52,16 @@
     ]
   },
   "build": {
-    "productName": "ElectronReact",
-    "appId": "org.develar.ElectronReact",
+    "productName": "OTLFiddle",
+    "appId": "uk.co.corvelsoftware.otlfiddle",
     "files": [
       "dist/",
       "node_modules/",
       "app.html",
       "main.prod.js",
       "main.prod.js.map",
-      "package.json"
+      "package.json",
+      "public/"
     ],
     "dmg": {
       "contents": [
@@ -277,11 +278,14 @@
     "@material-ui/icons": "^4.9.1",
     "@material-ui/lab": "^4.0.0-alpha.56",
     "@reduxjs/toolkit": "^1.4.0",
+    "@svgdotjs/svg.js": "^3.0.16",
+    "@types/opentype.js": "^0.7.2",
     "electron-debug": "^3.1.0",
     "electron-log": "^4.2.2",
     "electron-updater": "^4.3.1",
     "history": "^4.7.2",
     "material-ui-dropzone": "^3.3.1",
+    "opentype.js": "github:simoncozens/opentype.js#crowbar",
     "react": "^16.13.1",
     "react-dom": "^16.12.0",
     "react-hot-loader": "^4.12.21",

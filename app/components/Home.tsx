@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import {
@@ -8,19 +8,30 @@ import {
 } from '@material-ui/core/styles';
 import Split from 'react-split';
 import Card from '@material-ui/core/Card';
+import TextField from '@material-ui/core/TextField';
 import Snackbar from '@material-ui/core/Snackbar';
 import MuiAlert, { AlertProps } from '@material-ui/lab/Alert';
 import { DropzoneArea } from 'material-ui-dropzone';
 import Container from '@material-ui/core/Container';
 import { checkPythonLibs, decompileOTF } from '../features/Python';
+import { shape, createFont, destroyFont } from '../features/Harfbuzz';
 import styles from './Home.css';
 
 const { dialog } = require('electron').remote;
 const { app } = require('electron');
 
 const useStyles = makeStyles({
-  textarea: {
+  fullWidth: {
     width: '100%',
+  },
+  fullHeight: {
+    height: '100%',
+  },
+  shapeOutput: {
+    wordBreak: 'break-all',
+  },
+  svgDiv: {
+    backgroundColor: 'white',
   },
 });
 
@@ -28,18 +39,61 @@ function Alert(props: AlertProps) {
   return <MuiAlert elevation={6} variant="filled" {...props} />;
 }
 
+function deleteAllChildren(e: any) {
+  let child = e.lastElementChild;
+  while (child) {
+    e.removeChild(child);
+    child = e.lastElementChild;
+  }
+}
+
 export default function Home(): JSX.Element {
   const classes = useStyles();
-  const [glyphStringToBeDrawn, setGlyphStringToBeDrawn] = useState('');
+  const [textToBeDrawn, setTextToBeDrawn] = useState('');
   const [fontName, setFontName] = useState('');
   const [fontPath, setFontPath] = useState('');
+  const [hbFont, sethbFont] = useState();
+  const [shaperOutput, setShaperOutput] = useState();
   const [featureCode, setFeatureCode] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const closeError = () => setErrorMessage('');
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+
+  const svgDiv = useRef(document.createElement('div'));
+
   const editFeaturecode = (text) => {
     setFeatureCode(text);
   };
+  const textChanged = (text: string) => {
+    if (hbFont) {
+      console.log('Got hbFont', hbFont);
+      const shapingResult = shape(hbFont, text);
+      console.log('Got result ', shapingResult);
+      deleteAllChildren(svgDiv.current);
+      shapingResult.svg.addTo(svgDiv.current);
+      setShaperOutput(shapingResult);
+    }
+    setTextToBeDrawn(text);
+  };
+  const fontChanged = (fontFile: string) => {
+    if (hbFont) {
+      destroyFont(hbFont);
+    }
+    setFontName(fontFile.name);
+    setFontPath(fontFile.path);
+    sethbFont(createFont(fontFile.path));
+    decompileOTF(fontFile.path)
+      .then((res) => {
+        const { stdout } = res;
+        setFeatureCode(stdout);
+        return stdout;
+      })
+      .catch((fail) => {
+        setErrorMessage(fail);
+      });
+    textChanged(textToBeDrawn);
+  };
+
   const theme = React.useMemo(
     () =>
       createMuiTheme({
@@ -61,7 +115,7 @@ export default function Home(): JSX.Element {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Container maxWidth="lg">
+      <Container maxWidth="lg" className={classes.fullHeight}>
         <DropzoneArea
           acceptedFiles={['.otf', '.ttf']}
           dropzoneText={fontName || 'Drag and drop a font here or click'}
@@ -71,21 +125,11 @@ export default function Home(): JSX.Element {
           onChange={(files) => {
             console.log(files);
             if (!files[0]) return;
-            setFontName(files[0].name);
-            setFontPath(files[0].path);
-            decompileOTF(files[0].path)
-              .then((res) => {
-                const { stdout } = res;
-                setFeatureCode(stdout);
-                return stdout;
-              })
-              .catch((fail) => {
-                setErrorMessage(fail);
-              });
+            fontChanged(files[0]);
           }}
         />
         <Split
-          className={styles.flex}
+          className={`${styles.flex} ${classes.fullHeight}`}
           sizes={[50, 50]}
           elementStyle={(dimension, size, gutterSize) => ({
             'flex-basis': `calc(${size}% - ${gutterSize}px)`,
@@ -96,18 +140,25 @@ export default function Home(): JSX.Element {
         >
           <Card variant="outlined">
             <textarea
-              className={classes.textarea}
+              className={`${classes.fullHeight} ${classes.fullWidth}`}
               disabled={fontName.length === 0}
               value={featureCode}
               onChange={(e) => editFeaturecode(e.target.value)}
             />
           </Card>
           <div>
+            <TextField
+              value={textToBeDrawn}
+              className={classes.fullWidth}
+              label="Text"
+              onChange={(e) => textChanged(e.target.value)}
+              variant="outlined"
+            />
             <Card variant="outlined">
-              <div> Two </div>
-            </Card>
-            <Card variant="outlined">
-              <div> Three </div>
+              <div className={classes.shapeOutput}>
+                {shaperOutput && shaperOutput.text}
+              </div>
+              <div ref={svgDiv} className={classes.svgDiv} />
             </Card>
           </div>
         </Split>
