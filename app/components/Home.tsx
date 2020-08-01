@@ -13,7 +13,11 @@ import Snackbar from '@material-ui/core/Snackbar';
 import MuiAlert, { AlertProps } from '@material-ui/lab/Alert';
 import { DropzoneArea } from 'material-ui-dropzone';
 import Container from '@material-ui/core/Container';
-import { checkPythonLibs, decompileOTF } from '../features/Python';
+import {
+  checkPythonLibs,
+  decompileOTF,
+  writeAndCompileFeature,
+} from '../features/Python';
 import { shape, createFont, destroyFont } from '../features/Harfbuzz';
 import styles from './Home.css';
 
@@ -28,7 +32,7 @@ const useStyles = makeStyles({
     height: '100%',
   },
   shapeOutput: {
-    wordBreak: 'break-all',
+    // wordBreak: 'break-all',
   },
   svgDiv: {
     backgroundColor: 'white',
@@ -36,10 +40,11 @@ const useStyles = makeStyles({
 });
 
 function Alert(props: AlertProps) {
+  // eslint-disable-next-line react/jsx-props-no-spreading
   return <MuiAlert elevation={6} variant="filled" {...props} />;
 }
 
-function deleteAllChildren(e: any) {
+function deleteAllChildren(e) {
   let child = e.lastElementChild;
   while (child) {
     e.removeChild(child);
@@ -54,26 +59,40 @@ export default function Home(): JSX.Element {
   const [fontPath, setFontPath] = useState('');
   const [hbFont, sethbFont] = useState();
   const [shaperOutput, setShaperOutput] = useState();
+  const [spinning, setSpinning] = useState(false);
   const [featureCode, setFeatureCode] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const closeError = () => setErrorMessage('');
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
 
   const svgDiv = useRef(document.createElement('div'));
-
-  const editFeaturecode = (text) => {
-    setFeatureCode(text);
+  const validFea = () => {
+    return true;
   };
   const textChanged = (text: string) => {
-    if (hbFont) {
-      console.log('Got hbFont', hbFont);
+    if (hbFont && hbFont.hbFont) {
       const shapingResult = shape(hbFont, text);
-      console.log('Got result ', shapingResult);
       deleteAllChildren(svgDiv.current);
       shapingResult.svg.addTo(svgDiv.current);
       setShaperOutput(shapingResult);
     }
     setTextToBeDrawn(text);
+  };
+  const editFeaturecode = (text) => {
+    if (validFea(text) && !spinning) {
+      setSpinning(true);
+      // eslint-disable-next-line promise/catch-or-return
+      writeAndCompileFeature(text, fontPath).then((ff) => {
+        // if (hbFont) {
+        // destroyFont(hbFont);
+        // }
+        setFontPath(ff);
+        sethbFont(createFont(ff));
+        textChanged(textToBeDrawn);
+        return setSpinning(false);
+      });
+    }
+    setFeatureCode(text);
   };
   const fontChanged = (fontFile: string) => {
     if (hbFont) {

@@ -34,23 +34,7 @@ function json2txt(o: Glyph[], otFont): string {
     }
     return base;
   });
-  return `[${txt.join('|')}]`;
-}
-
-export function shape(font: OTLFiddleFont, text: string): Record<string, any> {
-  if (!font || !font.hbFont) {
-    return;
-  }
-  const buffer = window['hbjs'].createBuffer();
-  buffer.addText(text);
-  buffer.guessSegmentProperties();
-  window['hbjs'].shape(font.hbFont, buffer, '', 0, 0);
-  const json = buffer.json();
-  buffer.destroy();
-  return {
-    text: json2txt(json, font.otFont),
-    svg: glyphstringToSVG(json, font),
-  };
+  return `[${txt.join('|\u200B')}]`;
 }
 
 function getGlyphSVG(gid: number, font: OTLFiddleFont) {
@@ -91,6 +75,22 @@ function glyphstringToSVG(glyphstring: Glyph[], font: OTLFiddleFont): SVG.Svg {
   return totalSVG;
 }
 
+export function shape(font: OTLFiddleFont, text: string): Record<string, any> {
+  if (!font || !font.hbFont) {
+    return {};
+  }
+  const buffer = window.hbjs.createBuffer();
+  buffer.addText(text);
+  buffer.guessSegmentProperties();
+  window.hbjs.shape(font.hbFont, buffer, '', 0, 0);
+  const json = buffer.json();
+  buffer.destroy();
+  return {
+    text: json2txt(json, font.otFont),
+    svg: glyphstringToSVG(json, font),
+  };
+}
+
 export function createFont(filepath): OTLFiddleFont {
   const { hbjs } = window;
   const fontBlob = fs.readFileSync(filepath);
@@ -112,7 +112,7 @@ export function createFont(filepath): OTLFiddleFont {
 
 export function destroyFont(font: OTLFiddleFont) {
   font.hbFont.destroy();
-  font.hbBlob.destroy();
+  font.blob.destroy();
   font.face.destroy();
   font.hbFont = null;
 }
