@@ -97,7 +97,7 @@
     },
     "publish": {
       "provider": "github",
-      "owner": "simoncozens`",
+      "owner": "simoncozens",
       "repo": "otlfiddle",
       "private": false
     }
@@ -111,7 +111,7 @@
     "email": "simon@simon-cozens.org",
     "url": "http://www.corvelsoftware.co.uk/"
   },
-  "license": "Apache",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/simoncozens/otlfiddle/issues"
   },
