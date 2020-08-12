@@ -55,3 +55,24 @@ a:hover {
 .MuiDropzoneArea-icon {
   display: none !important;
 }
+
+.MuiDropzoneArea-invalid {
+  background-image: inherit !important;
+  border-color: #aa0 !important;
+}
+
+.MuiBackdrop-root {
+  top: inherit !important;
+  left: inherit !important;
+  right: inherit !important;
+  bottom: inherit !important;
+  display: flex;
+  width: 46% !important;
+  height: 100% !important;
+  z-index: 1000 !important;
+  position: absolute !important;
+  align-items: flex-start !important;
+  justify-content: center;
+  background-color: rgba(128, 128, 128, 0.2) !important;
+  -webkit-tap-highlight-color: transparent;
+}

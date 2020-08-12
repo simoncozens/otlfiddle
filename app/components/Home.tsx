@@ -10,14 +10,14 @@ import Split from 'react-split';
 import Card from '@material-ui/core/Card';
 import TextField from '@material-ui/core/TextField';
 import Snackbar from '@material-ui/core/Snackbar';
+import Backdrop from '@material-ui/core/Backdrop';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import MuiAlert, { AlertProps } from '@material-ui/lab/Alert';
 import { DropzoneArea } from 'material-ui-dropzone';
 import Container from '@material-ui/core/Container';
-import {
-  checkPythonLibs,
-  decompileOTF,
-  writeAndCompileFeature,
-} from '../features/Python';
+import FeatureCodeEditor from './FeatureCodeEditor';
+import { checkPythonLibs, decompileOTF, OTLServer } from '../features/Python';
+// import { OTLServer } from '../features/Makeotf';
 import { shape, createFont, destroyFont } from '../features/Harfbuzz';
 import styles from './Home.css';
 
@@ -37,6 +37,13 @@ const useStyles = makeStyles({
   svgDiv: {
     backgroundColor: 'white',
   },
+  spinning: {},
+  spinner: {
+    position: 'absolute',
+    margin: 0,
+    top: '50%',
+    zIndex: 1000,
+  },
 });
 
 function Alert(props: AlertProps) {
@@ -52,65 +59,86 @@ function deleteAllChildren(e) {
   }
 }
 
+let font;
+const setFont = (x) => {
+  font = x;
+};
+
 export default function Home(): JSX.Element {
   const classes = useStyles();
   const [textToBeDrawn, setTextToBeDrawn] = useState('');
+  const [featureCodeInitialState, setFeatureCodeInitialState] = useState('');
   const [fontName, setFontName] = useState('');
-  const [fontPath, setFontPath] = useState('');
-  const [hbFont, sethbFont] = useState();
+  // const [fontPath, setFontPath] = useState('');
+  const [otlServer, setOtlServer] = useState('');
+  // const [font, setFont] = useState();
   const [shaperOutput, setShaperOutput] = useState();
   const [spinning, setSpinning] = useState(false);
-  const [featureCode, setFeatureCode] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const closeError = () => setErrorMessage('');
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+  const inputEl = useRef(null);
 
   const svgDiv = useRef(document.createElement('div'));
-  const validFea = () => {
-    return true;
-  };
   const textChanged = (text: string) => {
-    if (hbFont && hbFont.hbFont) {
-      const shapingResult = shape(hbFont, text);
+    // console.log('Text changed, redrawing');
+    if (font && font.hbFont) {
+      // console.log('We have a font');
+      // console.log(font);
+      const shapingResult = shape(font, text);
       deleteAllChildren(svgDiv.current);
       shapingResult.svg.addTo(svgDiv.current);
       setShaperOutput(shapingResult);
     }
     setTextToBeDrawn(text);
+    setSpinning(false);
+  };
+
+  const fontCompiledOk = (newfile) => {
+    // console.log('Got OK notification');
+    // setFontPath(newfile);
+    if (font) {
+      destroyFont(font);
+    }
+    // console.log(`Reading from ${newfile}`);
+    setFont(createFont(newfile));
+    setTimeout(() => textChanged(inputEl.current), 0);
+  };
+  const fontCompileFailure = () => {
+    setErrorMessage('Failed to compile font');
+    setSpinning(false);
   };
   const editFeaturecode = (text) => {
-    if (validFea(text) && !spinning) {
+    if (!spinning) {
       setSpinning(true);
-      // eslint-disable-next-line promise/catch-or-return
-      writeAndCompileFeature(text, fontPath).then((ff) => {
-        // if (hbFont) {
-        // destroyFont(hbFont);
-        // }
-        setFontPath(ff);
-        sethbFont(createFont(ff));
-        textChanged(textToBeDrawn);
-        return setSpinning(false);
-      });
+      inputEl.current = textToBeDrawn;
+      // console.log(inputEl);
+      otlServer.compile(text);
     }
-    setFeatureCode(text);
   };
   const fontChanged = (fontFile: string) => {
-    if (hbFont) {
-      destroyFont(hbFont);
+    if (font) {
+      destroyFont(font);
     }
     setFontName(fontFile.name);
-    setFontPath(fontFile.path);
-    sethbFont(createFont(fontFile.path));
+    // setFontPath(fontFile.path);
+    setFont(createFont(fontFile.path));
+    setOtlServer(
+      new OTLServer(fontFile.path, fontCompileFailure, fontCompiledOk)
+    );
     decompileOTF(fontFile.path)
       .then((res) => {
         const { stdout } = res;
-        setFeatureCode(stdout);
+        setFeatureCodeInitialState(stdout);
         return stdout;
       })
       .catch((fail) => {
+        // console.log(fail);
         setErrorMessage(fail);
       });
-    textChanged(textToBeDrawn);
+    // console.log('Font changed, redrawing');
+
+    setTimeout(() => textChanged(textToBeDrawn), 0);
   };
 
   const theme = React.useMemo(
@@ -123,10 +151,12 @@ export default function Home(): JSX.Element {
     [prefersDarkMode]
   );
 
-  if (!checkPythonLibs()) {
+  const res = checkPythonLibs();
+  if (res.status !== 0) {
     dialog.showErrorBox(
       'Python libraries not installed',
-      `This isn't going to work. Use "pip install fontTools fontFeatures" from the command line to get the libraries we need installed.`
+      `Code: ${res.status} stdout: ${res.stdout} Code: ${res.stderr} Error: ${res.error}`
+      // `This isn't going to work. Use "pip install fontTools fontFeatures" from the command line to get the libraries we need installed.`
     );
     app.quit();
   }
@@ -142,7 +172,7 @@ export default function Home(): JSX.Element {
           filesLimit={1}
           showPreviewsInDropzone={false}
           onChange={(files) => {
-            console.log(files);
+            // console.log(files);
             if (!files[0]) return;
             fontChanged(files[0]);
           }}
@@ -157,14 +187,11 @@ export default function Home(): JSX.Element {
             'flex-basis': `${gutterSize}px`,
           })}
         >
-          <Card variant="outlined">
-            <textarea
-              className={`${classes.fullHeight} ${classes.fullWidth}`}
-              disabled={fontName.length === 0}
-              value={featureCode}
-              onChange={(e) => editFeaturecode(e.target.value)}
-            />
-          </Card>
+          <FeatureCodeEditor
+            disabled={fontName.length === 0}
+            initialState={featureCodeInitialState}
+            onChange={(code) => editFeaturecode(code)}
+          />
           <div>
             <TextField
               value={textToBeDrawn}
@@ -173,7 +200,15 @@ export default function Home(): JSX.Element {
               onChange={(e) => textChanged(e.target.value)}
               variant="outlined"
             />
-            <Card variant="outlined">
+            <Card
+              variant="outlined"
+              className={spinning ? classes.spinning : ''}
+            >
+              {spinning && (
+                <Backdrop open>
+                  <CircularProgress />
+                </Backdrop>
+              )}
               <div className={classes.shapeOutput}>
                 {shaperOutput && shaperOutput.text}
               </div>

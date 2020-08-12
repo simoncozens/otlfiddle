@@ -295,6 +295,7 @@
     "redux": "^4.0.5",
     "redux-thunk": "^2.3.0",
     "regenerator-runtime": "^0.13.5",
+    "shell-env": "^3.0.0",
     "source-map-support": "^0.5.19",
     "temp": "^0.9.1"
   },

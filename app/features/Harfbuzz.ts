@@ -1,5 +1,4 @@
 // eslint-disable @typescript-eslint/dot-notation
-import { Font, load, Path } from 'opentype.js';
 import * as SVG from '@svgdotjs/svg.js';
 
 const fs = require('fs');
@@ -15,16 +14,13 @@ interface Glyph {
 
 interface OTLFiddleFont {
   hbFont: any;
-  otFont: Font;
   blob: any;
   face: any;
 }
 
-function json2txt(o: Glyph[], otFont): string {
-  console.log(o);
+function json2txt(o: Glyph[], hbFont): string {
   const txt = o.map((g: Glyph) => {
-    const glyph = otFont && otFont.glyphs.get(g.g);
-    const name = glyph ? glyph.name : g.g;
+    const name = hbFont ? hbFont.glyphName(g.g) : g.g;
     let base = `${name}=${g.cl}`;
     if (g.ax) {
       base = `${base}+${g.ax}`;
@@ -39,14 +35,7 @@ function json2txt(o: Glyph[], otFont): string {
 
 function getGlyphSVG(gid: number, font: OTLFiddleFont) {
   let svgText = font.hbFont.glyphToPath(gid);
-  if (svgText.length < 10) {
-    const glyph = font.otFont.getGlyph(gid);
-    if (glyph) {
-      svgText = (glyph.path as Path).toSVG(2);
-    }
-  } else {
-    svgText = `<path d="${svgText}"/>`;
-  }
+  svgText = `<path d="${svgText}"/>`;
   svgText = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">${svgText} </svg>`;
   const parser = new DOMParser();
   const doc = parser.parseFromString(svgText, 'image/svg+xml');
@@ -86,7 +75,7 @@ export function shape(font: OTLFiddleFont, text: string): Record<string, any> {
   const json = buffer.json();
   buffer.destroy();
   return {
-    text: json2txt(json, font.otFont),
+    text: json2txt(json, font.hbFont),
     svg: glyphstringToSVG(json, font),
   };
 }
@@ -104,9 +93,6 @@ export function createFont(filepath): OTLFiddleFont {
     blob,
     face,
   };
-  load(filepath, (err, otFont) => {
-    font.otFont = otFont;
-  });
   return font;
 }
 
