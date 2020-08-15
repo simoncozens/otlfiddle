@@ -2,7 +2,7 @@
 const featureUse = new RegExp('\\s*feature\\s+\\w{4}\\s*');
 const scriptAssign = new RegExp('\\s*script\\s+\\w{4}\\s*');
 const languageAssign = new RegExp('\\s*language\\s+\\w{4}\\s*');
-const lookupflagAssign = new RegExp('\\s*lookupflag\\s+[^;]\\s*');
+const lookupflagAssign = new RegExp('\\s*lookupflag\\s+[^;]+\\s*');
 const languagesystemAssign = new RegExp(
   '\\s*languagesystem\\s+\\w{3,4}s*\\w{3,4}\\s*'
 );
@@ -13,7 +13,7 @@ const glyphclassAssign = new RegExp('@[A-Za-z_0-9.-]+\\s*=\\s*[^;]+');
 const anchorDef = new RegExp('anchorDef\\s+[^;]+');
 const valueRecordDef = new RegExp('valueRecordDef\\s+[^;]+');
 const ignoresub_or_pos = new RegExp(
-  'ignore\\s(?:substitute|sub|reversesub|rsub|position|pos)[^+;]'
+  'ignore\\s(?:substitute|sub|reversesub|rsub|position|pos)\\s+[^;]+'
 );
 const substitute = new RegExp('(sub|substitute)\\s+[^;]+');
 const mark_statement = new RegExp('markClass\\s+[^;]+');
@@ -27,6 +27,8 @@ const statement = new RegExp(
     scriptAssign.source +
     '|' +
     languagesystemAssign.source +
+    '|' +
+    lookupflagAssign.source +
     '|' +
     glyphclassAssign.source +
     '|' +
@@ -56,13 +58,13 @@ const lookupBlockOrUse = new RegExp(
 const tableBlock = new RegExp('table (?<tag>\\w{4}).*?\\k<tag>s*;');
 const cvParameterBlock = new RegExp('cvParameterss*\\{.*?\\}s*;');
 const featureBlock = new RegExp(
-  'feature (?<flabel>\\w+)(\\s+useExtension)?\\s*\\{\\s*(' +
+  'feature (?<flabel>\\w+)(\\s+useExtension)?\\s*\\{\\s*((?:' +
     statement.source +
     '|' +
     lookupBlockOrUse.source +
     '|' +
     cvParameterBlock +
-    ')+\\s*}\\s*\\k<flabel>\\s*;'
+    ')\\s*)+\\s*}\\s*\\k<flabel>\\s*;'
 );
 
 const topLevelStatement = new RegExp(
@@ -79,7 +81,7 @@ const topLevelStatement = new RegExp(
     ')?\\s*;'
 );
 const featureFile = new RegExp(
-  '^((?:' +
+  '^\\s*((?:' +
     topLevelStatement.source +
     '|' +
     featureBlock.source +
