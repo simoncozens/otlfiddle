@@ -74,6 +74,7 @@ const setFont = (x) => {
 export default function Home(): JSX.Element {
   const classes = useStyles();
   const [textToBeDrawn, setTextToBeDrawn] = useState('');
+  const [errorAnnotations, setErrorAnnotations] = useState([]);
   const [automatic, setAutomatic] = useState(false);
   const [valid, setValid] = useState(true);
   const [featureCode, setFeatureCode] = useState('');
@@ -114,11 +115,25 @@ export default function Home(): JSX.Element {
     }
     // console.log(`Reading from ${newfile}`);
     setFont(createFont(newfile));
+    setErrorAnnotations([]);
     setTimeout(() => textChanged(inputEl.current), 0);
   };
   const fontCompileFailure = (err) => {
-    const errShort = err.replace(/^.*?\.fea:/, '');
-    setErrorMessage(`Failed to compile font: ${errShort}`);
+    const errors = [];
+    const errShort = err.replace(/^.*?\.fea:/g, '');
+    setErrorMessage(`Failed to compile font`);
+    errShort.split('\n').forEach((line) => {
+      const match = line.match(/^(\d+):(\d+):(.*)/);
+      if (match) {
+        errors.push({
+          row: parseInt(match[1], 10) - 1,
+          column: match[2],
+          type: 'error',
+          text: match[3],
+        });
+      }
+    });
+    setErrorAnnotations(errors);
     setSpinning(false);
   };
   const doCompile = (text) => {
@@ -227,6 +242,7 @@ export default function Home(): JSX.Element {
               onChange={(code) => editFeaturecode(code)}
               validityChanged={(validNow) => setValid(validNow)}
               className={classes.fullHeight}
+              errorAnnotations={errorAnnotations}
             />
           </div>
           <div>
