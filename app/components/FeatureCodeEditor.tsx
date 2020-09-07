@@ -28,6 +28,7 @@ const useStyles = makeStyles({
 
 interface FeatureCodeEditorProps {
   onChange: (s: string) => void;
+  validityChanged: (v: boolean) => void;
   initialState: string;
   disabled: boolean;
 }
@@ -35,17 +36,19 @@ export default function FeatureCodeEditor(
   props: FeatureCodeEditorProps
 ): JSX.Element {
   const classes = useStyles();
-  const { initialState, disabled, onChange } = props;
+  const { initialState, disabled, onChange, validityChanged } = props;
 
   const [featureCode, setFeatureCode] = useState(initialState);
   const [valid, setValid] = useState(true);
   const editFeaturecode = (code) => {
     setFeatureCode(code);
     if (validFeatureFile(code)) {
+      validityChanged(true);
       onChange(code);
       setValid(true);
     } else {
       setValid(false);
+      validityChanged(false);
     }
   };
   return (

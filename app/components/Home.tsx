@@ -11,6 +11,10 @@ import Card from '@material-ui/core/Card';
 import TextField from '@material-ui/core/TextField';
 import Snackbar from '@material-ui/core/Snackbar';
 import Backdrop from '@material-ui/core/Backdrop';
+import Button from '@material-ui/core/Button';
+import Switch from '@material-ui/core/Switch';
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import MuiAlert, { AlertProps } from '@material-ui/lab/Alert';
 import { DropzoneArea } from 'material-ui-dropzone';
@@ -36,6 +40,9 @@ const useStyles = makeStyles({
   },
   svgDiv: {
     backgroundColor: 'white',
+  },
+  spaceTopBottom: {
+    margin: '10px',
   },
   spinning: {},
   spinner: {
@@ -67,7 +74,9 @@ const setFont = (x) => {
 export default function Home(): JSX.Element {
   const classes = useStyles();
   const [textToBeDrawn, setTextToBeDrawn] = useState('');
-  const [featureCodeInitialState, setFeatureCodeInitialState] = useState('');
+  const [automatic, setAutomatic] = useState(false);
+  const [valid, setValid] = useState(true);
+  const [featureCode, setFeatureCode] = useState('');
   const [fontName, setFontName] = useState('');
   // const [fontPath, setFontPath] = useState('');
   const [otlServer, setOtlServer] = useState('');
@@ -80,6 +89,9 @@ export default function Home(): JSX.Element {
   const inputEl = useRef(null);
 
   const svgDiv = useRef(document.createElement('div'));
+  const toggleAutomatic = () => {
+    setAutomatic(!automatic);
+  };
   const textChanged = (text: string) => {
     // console.log('Text changed, redrawing');
     if (font && font.hbFont) {
@@ -108,14 +120,19 @@ export default function Home(): JSX.Element {
     setErrorMessage('Failed to compile font');
     setSpinning(false);
   };
+  const doCompile = (text) => {
+    setSpinning(true);
+    inputEl.current = textToBeDrawn;
+    // console.log(inputEl);
+    otlServer.compile(text);
+  };
   const editFeaturecode = (text) => {
-    if (!spinning) {
-      setSpinning(true);
-      inputEl.current = textToBeDrawn;
-      // console.log(inputEl);
-      otlServer.compile(text);
+    setFeatureCode(text);
+    if (automatic && !spinning) {
+      doCompile(text);
     }
   };
+
   const fontChanged = (fontFile: string) => {
     if (font) {
       destroyFont(font);
@@ -129,7 +146,7 @@ export default function Home(): JSX.Element {
     decompileOTF(fontFile.path)
       .then((res) => {
         const { stdout } = res;
-        setFeatureCodeInitialState(stdout);
+        setFeatureCode(stdout);
         return stdout;
       })
       .catch((fail) => {
@@ -187,11 +204,29 @@ export default function Home(): JSX.Element {
             'flex-basis': `${gutterSize}px`,
           })}
         >
-          <FeatureCodeEditor
-            disabled={fontName.length === 0}
-            initialState={featureCodeInitialState}
-            onChange={(code) => editFeaturecode(code)}
-          />
+          <div>
+            <div className={classes.spaceTopBottom}>
+              <FormControlLabel
+                control={
+                  <Switch checked={automatic} onChange={toggleAutomatic} />
+                }
+                label="Autocompile"
+              />
+              <Button
+                variant="contained"
+                disabled={automatic || !valid}
+                onClick={() => doCompile(featureCode)}
+              >
+                Compile
+              </Button>
+            </div>
+            <FeatureCodeEditor
+              disabled={fontName.length === 0}
+              initialState={featureCode}
+              onChange={(code) => editFeaturecode(code)}
+              validityChanged={(validNow) => setValid(validNow)}
+            />
+          </div>
           <div>
             <TextField
               value={textToBeDrawn}
