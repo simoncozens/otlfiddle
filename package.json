@@ -1,7 +1,7 @@
 {
   "name": "OTLFiddle",
   "productName": "OTFiddle",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Test bed for playing with OpenType Layout",
   "scripts": {
     "build": "concurrently \"yarn build-main\" \"yarn build-renderer\"",
