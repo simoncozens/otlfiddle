@@ -116,8 +116,9 @@ export default function Home(): JSX.Element {
     setFont(createFont(newfile));
     setTimeout(() => textChanged(inputEl.current), 0);
   };
-  const fontCompileFailure = () => {
-    setErrorMessage('Failed to compile font');
+  const fontCompileFailure = (err) => {
+    const errShort = err.replace(/^.*?\.fea:/, '');
+    setErrorMessage(`Failed to compile font: ${errShort}`);
     setSpinning(false);
   };
   const doCompile = (text) => {
@@ -225,6 +226,7 @@ export default function Home(): JSX.Element {
               initialState={featureCode}
               onChange={(code) => editFeaturecode(code)}
               validityChanged={(validNow) => setValid(validNow)}
+              className={classes.fullHeight}
             />
           </div>
           <div>

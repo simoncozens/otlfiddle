@@ -52,7 +52,7 @@ export default function FeatureCodeEditor(
     }
   };
   return (
-    <Card variant="outlined">
+    <Card variant="outlined" className={classes.fullHeight}>
       <textarea
         className={`${classes.fullHeight} ${classes.fullWidth} ${
           valid ? classes.valid : classes.error

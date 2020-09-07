@@ -56,6 +56,7 @@ export class OTLServer {
     // this.child.stdin.write(feature.length - 1 + '\n');
     // this.child.stdin.write(feature);
     let success = true;
+    let error = '';
     let tables = ['GSUB', 'GPOS'];
     if (feature.indexOf('table GDEF') !== -1) {
       tables = ['GSUB', 'GPOS', 'GDEF'];
@@ -87,8 +88,9 @@ export class OTLServer {
         // child.stdout.on("data", (d) => {
         //     console.log(`makeotf stdout: ${d}`)
         //   });
-        child.stderr.on('data', () => {
+        child.stderr.on('data', (d) => {
           success = false;
+          error = d;
           // console.log(`feaLib stderr: ${d}`);
         });
         child.on('error', () => {
@@ -100,7 +102,7 @@ export class OTLServer {
             // console.log(`OK, written to ${this.outputFile}`);
             this.okCallback(this.outputFile);
           } else {
-            this.errorCallback();
+            this.errorCallback(error);
           }
         });
       });
