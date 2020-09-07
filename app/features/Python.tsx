@@ -15,6 +15,8 @@ const app = process.type === 'renderer' ? electron.remote.app : electron.app;
 // const otlpath = path.join(app.getAppPath(), '/public/otlserver.py');
 const decompilepath = path.join(app.getAppPath(), '/public/decompile.py');
 
+let pythonVersion = 'python3';
+
 export class OTLServer {
   outputFile: string;
 
@@ -54,17 +56,24 @@ export class OTLServer {
     // this.child.stdin.write(feature.length - 1 + '\n');
     // this.child.stdin.write(feature);
     let success = true;
+    let tables = ['GSUB', 'GPOS'];
+    if (feature.indexOf('table GDEF') !== -1) {
+      tables = ['GSUB', 'GPOS', 'GDEF'];
+    }
 
     // eslint-disable-next-line promise/catch-or-return
     fs.writeFile(this.featureFile, feature)
       .then(() => {
         return execFile(
-          'python3',
+          pythonVersion,
           [
             '-m',
             'fontTools.feaLib',
             '-o',
             this.outputFile,
+            '-t',
+            ...tables,
+            '--',
             this.featureFile,
             this.origFile,
           ],
@@ -99,15 +108,24 @@ export class OTLServer {
 }
 
 export function checkPythonLibs(): Record<string, unknown> {
-  const res = spawnSync('python3', ['-c', 'import fontTools'], {
+  let res = spawnSync('python3', ['-c', 'import fontTools'], {
     env: shellEnv,
   });
+  if (res.status === 0) {
+    return res;
+  }
+  // Try python 2
+  res = spawnSync('python', ['-c', 'import fontTools'], {
+    env: shellEnv,
+  });
+  if (res.status === 0) {
+    pythonVersion = 'python';
+  }
   return res;
-  // status === 0;
 }
 
 export function decompileOTF(file: string): Promise<Record<string, unknown>> {
-  return execFilePromise('python3', [decompilepath, file], {
+  return execFilePromise(pythonVersion, [decompilepath, file], {
     env: shellEnv,
   });
 }
