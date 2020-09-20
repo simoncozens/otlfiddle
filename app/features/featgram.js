@@ -4,7 +4,7 @@ const scriptAssign = new RegExp('\\s*script\\s+\\w{4}\\s*');
 const languageAssign = new RegExp('\\s*language\\s+\\w{4}\\s*');
 const lookupflagAssign = new RegExp('\\s*lookupflag\\s+[^;]+\\s*');
 const languagesystemAssign = new RegExp(
-  '\\s*languagesystem\\s+\\w{3,4}s*\\w{3,4}\\s*'
+  '\\s*languagesystem\\s+\\w{3,4}\\s*\\w{3,4}\\s*'
 );
 const randomCrap = new RegExp('\\s*(?:parameters|sizemenuname)\\s+[^;]s*');
 

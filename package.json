@@ -1,7 +1,7 @@
 {
   "name": "OTLFiddle",
   "productName": "OTFiddle",
-  "version": "1.1.0",
+  "version": "1.1.5",
   "description": "Test bed for playing with OpenType Layout",
   "scripts": {
     "build": "concurrently \"yarn build-main\" \"yarn build-renderer\"",
@@ -54,6 +54,7 @@
   "build": {
     "productName": "OTLFiddle",
     "appId": "uk.co.corvelsoftware.otlfiddle",
+    "afterSign": "scripts/notarize.js",
     "files": [
       "dist/",
       "node_modules/",
@@ -90,6 +91,11 @@
         "AppImage"
       ],
       "category": "Development"
+    },
+    "mac": {
+      "hardenedRuntime": true,
+      "entitlements": "entitlements.plist",
+      "entitlementsInherit": "entitlements.plist"
     },
     "directories": {
       "buildResources": "resources",
@@ -232,6 +238,7 @@
     "ace-builds": "^1.4.12",
     "electron-debug": "^3.1.0",
     "electron-log": "^4.2.2",
+    "electron-notarize": "^1.0.0",
     "electron-updater": "^4.3.1",
     "history": "^4.7.2",
     "material-ui-dropzone": "^3.3.1",
