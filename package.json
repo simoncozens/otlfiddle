@@ -54,6 +54,7 @@
   "build": {
     "productName": "OTLFiddle",
     "appId": "uk.co.corvelsoftware.otlfiddle",
+    "afterSign": "scripts/notarize.js",
     "files": [
       "dist/",
       "node_modules/",
@@ -94,8 +95,7 @@
     "mac": {
       "hardenedRuntime": true,
       "entitlements": "entitlements.plist",
-      "entitlementsInherit": "entitlements.plist",
-      "afterSign": "scripts/notarize.js"
+      "entitlementsInherit": "entitlements.plist"
     },
     "directories": {
       "buildResources": "resources",
