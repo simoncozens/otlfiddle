@@ -1,7 +1,7 @@
 {
   "name": "OTLFiddle",
   "productName": "OTFiddle",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "Test bed for playing with OpenType Layout",
   "scripts": {
     "build": "concurrently \"yarn build-main\" \"yarn build-renderer\"",
@@ -101,6 +101,15 @@
       "buildResources": "resources",
       "output": "release"
     },
+    "extraResources": [
+      {
+        "from": "./fonttools/Lib/",
+        "to": "python-libs",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
     "publish": {
       "provider": "github",
       "owner": "simoncozens",

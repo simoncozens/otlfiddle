@@ -1,5 +1,6 @@
 const { spawnSync, execFile, ChildProcess } = require('child_process');
 
+const process = require('process');
 const util = require('util');
 const fs = require('fs').promises;
 const temp = require('temp');
@@ -9,7 +10,8 @@ const electron = require('electron');
 
 const app = process.type === 'renderer' ? electron.remote.app : electron.app;
 
-shellEnv.PYTHONPATH = path.join(app.getAppPath(), '/public');
+shellEnv.PYTHONPATH = path.join(process.resourcesPath, 'python-libs');
+
 const execFilePromise = util.promisify(execFile);
 
 const decompilepath = path.join(app.getAppPath(), '/public/decompile.py');
